@@ -17,7 +17,8 @@ function CreatePurchaseForm({ companyName, onBack }) {
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [noTemplatesAlert, setNoTemplatesAlert] = useState(false);
   const [noQuantityAlert, setNoQuantityAlert] = useState(false);
-  const [onSaveFormSuccess, setOnSaveFormSuccess] = useState(false);
+  const [saveFormAlert, setSaveFormAlert] = useState(false);
+  const [saveFormAlertMessage, setSaveFormAlertMessage] = useState('');
 
   const fetchTemplates = useCallback(async () => {
     const loadedTemplates = await db.templates.toArray();
@@ -35,19 +36,15 @@ function CreatePurchaseForm({ companyName, onBack }) {
       setNoTemplatesAlert(false);
     }
   }, [templates]);
-  
-  
 
   useEffect(() => {
     const total = items.reduce((acc, item) => acc + (item.quantity || 0) * (item.price || 0), 0);
     setTotalPrice(total);
   }, [items]);
-  
 
   const handleCloseNoTemplatesDialog = () => {
     setNoTemplatesAlert(false);
   };
-
 
   const handleTemplateChange = (templateName) => {
     console.log("Selected template name:", templateName); // Log the selected template name  
@@ -81,13 +78,11 @@ function CreatePurchaseForm({ companyName, onBack }) {
     setItems(updatedItems);
   };
 
-
   const handleBack = () => {
     if (onBack) {
       onBack();
     }
   };
-
 
   if (showTemplateForm) {
     return <TemplateForm onBack={() => setShowTemplateForm(false)} onTemplatesUpdated={fetchTemplates}/>;
@@ -100,8 +95,9 @@ function CreatePurchaseForm({ companyName, onBack }) {
       const company = await db.companies.get({ name: companyName });
   
       if (!company) {
-        console.error('未能找到：', companyName);
-        alert('未能找到此公司！');
+        console.error('Can not find:', companyName);
+        setSaveFormAlert(true);
+        setSaveFormAlertMessage('未能找到此公司！');
         return;
       }
 
@@ -125,38 +121,44 @@ function CreatePurchaseForm({ companyName, onBack }) {
       companyForms.push(newForm);
   
       // Update the company entry in IndexedDB with the new array of forms
-      await db.companies.update(company.name, { forms: companyForms });
-  
-      alert('表单已保存！');
-      // setOnSaveFormSuccess(true); 
-      onBack();
+      await db.companies.update(company.name, { forms: companyForms });  
+      setSaveFormAlert(true);
+      setSaveFormAlertMessage('表单已保存！');
     } catch (error) {
       console.error('保存表单时出错:', error);
-      alert('保存失败！');
+      setSaveFormAlert(true);
+      setSaveFormAlertMessage('保存失败！');
+      return;
     }
   };
   
-  
+  const handleCloseSaveFormAlert = () => {
+    setSaveFormAlert(false);
+    setSaveFormAlertMessage('');
+    onBack();
+  };
 
   return (
     <div>
-      <Dialog
-        open={noTemplatesAlert}
-        onClose={handleCloseNoTemplatesDialog}
-        aria-labelledby="no-templates-dialog-title"
-        aria-describedby="no-templates-dialog-description"
-      >
-        <DialogTitle id="no-templates-dialog-title">{"无通用模板"}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="no-templates-dialog-description">
-            暂无通用模板，请先前往创建模板。
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => { setShowTemplateForm(true); handleCloseNoTemplatesDialog(); }}>创建模板</Button>
-          <Button onClick={handleBack}>返回</Button>
-        </DialogActions>
-      </Dialog> 
+      {noTemplatesAlert && (
+        <Dialog
+          open={noTemplatesAlert}
+          onClose={handleCloseNoTemplatesDialog}
+          aria-labelledby="no-templates-dialog-title"
+          aria-describedby="no-templates-dialog-description"
+        >
+          <DialogTitle id="no-templates-dialog-title">{"无通用模板"}</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="no-templates-dialog-description">
+              暂无通用模板，请先前往创建模板。
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => { setShowTemplateForm(true); handleCloseNoTemplatesDialog(); }}>创建模板</Button>
+            <Button onClick={handleBack}>返回</Button>
+          </DialogActions>
+        </Dialog>
+      )}
   
       {!noTemplatesAlert && (
         <>
@@ -164,61 +166,66 @@ function CreatePurchaseForm({ companyName, onBack }) {
           <select value={selectedTemplateId} onChange={(e) => handleTemplateChange(e.target.value)}>
             <option value="">请选择模板</option>
             {templates.map((template) => (
-                <option key={template.name} value={template.name}>{template.name}</option>
+              <option key={template.name} value={template.name}>{template.name}</option>
             ))}
           </select>
-          
+  
           <table>
-          <thead>
-            <tr>
-              <th>商品名称</th>
-              <th>单价</th>
-              <th>数量</th>
-              <th>总价</th>
-            </tr>
-          </thead>
-          <tbody>
+            <thead>
+              <tr>
+                <th>商品名称</th>
+                <th>单价</th>
+                <th>数量</th>
+                <th>总价</th>
+              </tr>
+            </thead>
+            <tbody>
               {items.map((item) => (
-                  <tr key={item.key}> {/* Use the unique key for each item */}
+                <tr key={item.key}>
                   <td>{item.name}</td>
                   <td>{item.price}</td>
                   <td>
-                      <input
+                    <input
                       type="number"
                       value={item.quantity || ''}
                       onChange={(e) => handleItemChange(item.key, 'quantity', e.target.value)}
-                      />
+                    />
                   </td>
                   <td>{(item.quantity || 0) * (item.price || 0)}</td>
-                  </tr>
+                </tr>
               ))}
-          </tbody>
-        </table>
-        <p>总价: {totalPrice}</p>
-        <Button onClick={() => handleSaveForm()}>保存表单</Button>
-        <Dialog open={noQuantityAlert}>
-          <DialogTitle>{'数量不可为空。'}</DialogTitle>
-          <DialogContent>
-            <DialogContentText>请重新输入。</DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setNoQuantityAlert(false)}>好的</Button>
-          </DialogActions>
-        </Dialog>
-        <Dialog open={onSaveFormSuccess}>
-          <DialogTitle>{'保存成功。'}</DialogTitle>
-          <DialogContent>
-            <DialogContentText>返回公司详情页面。</DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOnSaveFormSuccess(false)}>好的</Button>
-          </DialogActions>
-        </Dialog>  
+            </tbody>
+          </table>
+          <p>总价: {totalPrice}</p>
+          <Button onClick={() => handleSaveForm()}>保存表单</Button>
+  
+          {noQuantityAlert && (
+            <Dialog open={noQuantityAlert}>
+              <DialogTitle>{'数量不可为空。'}</DialogTitle>
+              <DialogContent>
+                <DialogContentText>请重新输入。</DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setNoQuantityAlert(false)}>好的</Button>
+              </DialogActions>
+            </Dialog>
+          )}
+  
+          {saveFormAlert && (
+            <Dialog open={saveFormAlert} onClose={handleCloseSaveFormAlert}>
+              <DialogTitle>保存表单结果</DialogTitle>
+              <DialogContent>
+                <DialogContentText>{saveFormAlertMessage}</DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleCloseSaveFormAlert}>确定</Button>
+              </DialogActions>
+            </Dialog>
+          )}
         </>
       )}
     </div>
   );
-  
 }
 
 export default CreatePurchaseForm;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import TemplateForm from './TemplateForm';
 import CompanyInfo from './CompanyInfo';
 import CompanyDetails from './CompanyDetails';
@@ -6,76 +6,77 @@ import db from './db';
 
 import Button from '@mui/material/Button';
 
-class MainPage extends React.Component {
-  state = {
-    showTemplateForm: false,
-    showCompanyForm: false,
-    showCompanyDetails: false,
-    selectedCompany: null,
-    companies: [],
-  };
+const MainPage = () => {
+  const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [showCompanyForm, setShowCompanyForm] = useState(false);
+  const [showCompanyDetails, setShowCompanyDetails] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [companies, setCompanies] = useState([]);
 
-  componentDidMount() {
-    this.fetchCompanies();
-  }
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
 
-  fetchCompanies = async () => {
+  const fetchCompanies = async () => {
     const allCompanies = await db.companies.toArray();
-    this.setState({ companies: allCompanies });
+    setCompanies(allCompanies);
   };
 
-  handleNewTemplate = () => {
-    this.setState({ showTemplateForm: true, showCompanyForm: false, showCompanyDetails: false });
+  const handleNewTemplate = () => {
+    setShowTemplateForm(true);
+    setShowCompanyForm(false);
+    setShowCompanyDetails(false);
   };
 
-  handleNewCompany = () => {
-    this.setState({ showCompanyForm: true, showTemplateForm: false, showCompanyDetails: false });
+  const handleNewCompany = () => {
+    setShowCompanyForm(true);
+    setShowTemplateForm(false);
+    setShowCompanyDetails(false);
   };
 
-  handleCompanyClick = async (companyName) => {
+  const handleCompanyClick = async (companyName) => {
     const company = await db.companies.get(companyName);
-    this.setState({ selectedCompany: company, showCompanyDetails: true, showTemplateForm: false, showCompanyForm: false });
+    setSelectedCompany(company);
+    setShowCompanyDetails(true);
+    setShowTemplateForm(false);
+    setShowCompanyForm(false);
   };
 
-  render() {
-    const { showTemplateForm, showCompanyForm, showCompanyDetails, selectedCompany, companies } = this.state;
-
-    return (
-      <div>
-        {showTemplateForm ? (
-          <TemplateForm />
-        ) : showCompanyForm ? (
-          <CompanyInfo />
-        ) : showCompanyDetails && selectedCompany ? (
-          <CompanyDetails company={selectedCompany} />
-        ) : (
+  return (
+    <div>
+      {showTemplateForm ? (
+        <TemplateForm />
+      ) : showCompanyForm ? (
+        <CompanyInfo />
+      ) : showCompanyDetails && selectedCompany ? (
+        <CompanyDetails company={selectedCompany} onUpdate={fetchCompanies} />
+      ) : (
+        <div>
+          <h1>欢迎来到进货账单系统</h1>
           <div>
-            <h1>欢迎来到进货账单系统</h1>
-            <div>
-            <Button variant="contained" onClick={this.handleNewTemplate}>新建通用模板</Button>
+            <Button variant="contained" onClick={handleNewTemplate}>新建通用模板</Button>
             <br /><br />
-            </div>
-            <div>
-            <Button variant="contained" onClick={this.handleNewCompany}>新建公司信息</Button>
-            <br /><br />
-            </div>
-            <div>
-                {companies.map((company) => (
-                    <Button 
-                    key={company.name}
-                    className="company-btn" 
-                    onClick={() => this.handleCompanyClick(company.name)}
-                    style={{ display: 'block', marginBottom: '10px' }}
-                    >
-                        {company.name}
-                    </Button>
-                ))}
-            </div>
           </div>
-        )}
-      </div>
-    );
-  }
+          <div>
+            <Button variant="contained" onClick={handleNewCompany}>新建公司信息</Button>
+            <br /><br />
+          </div>
+          <div>
+            {companies.map((company) => (
+              <Button
+                key={company.name}
+                className="company-btn"
+                onClick={() => handleCompanyClick(company.name)}
+                style={{ display: 'block', marginBottom: '10px' }}
+              >
+                {company.name}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default MainPage;
