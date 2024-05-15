@@ -1,0 +1,115 @@
+/* components */
+
+body {
+    margin-left: 20px;
+}
+
+/* elements */
+
+h1 {
+    font-size: larger;
+    font-weight: bolder;
+}
+
+h2 {
+    font-weight: bold;
+}
+
+/* buttons */
+
+.new-btn {
+    display: 'block';
+    margin-bottom: '10px';
+}
+
+.delete-btn {
+    display: 'block';
+    margin-bottom: '10px';
+}
+
+.confirm-btn {
+    display: block;
+    margin-bottom: '10px';
+}
+
+.confirm-delete-btn {
+    display: 'block';
+    margin-bottom: '10px';
+}
+
+.cancel-btn {
+    display: 'block';
+    margin-bottom: '10px';
+}
+
+.save-btn {
+    display: 'block';
+    margin-bottom: '10px';
+}
+
+.add-item-btn {
+    outline: auto;
+}
+
+.button-container {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    margin: 10px 10px 10px 10px !important;
+    padding: 10px 10px 10px 10px !important;
+    box-sizing: border-box !important;
+    font-size: medium !important;
+    font-weight: 500 !important;
+}
+
+.button-wrapper {
+    margin-right: 16px;
+}
+
+.menu-item {
+    font-family: Arial, sans-serif !important;
+    /* 示例字体 */
+    font-size: 16px !important;
+    /* 示例字体大小 */
+    padding: 3px 6px !important;
+    justify-content: center !important;
+    margin-left: 10px;
+    /* 文本对齐方式 */
+}
+
+.menu-item:hover {
+    background-color: #3d81ce !important;
+    /* 鼠标悬浮时的背景颜色 */
+    color: white !important;
+    /* 文字颜色 */
+}
+
+.popper {
+    position: absolute;
+    z-index: 1000;
+    /* 足够高以确保在其他元素之上 */
+    width: max-content;
+    /* 设定宽度为内容的最大宽度 */
+}
+
+/* text-boxes */
+
+.company-name-box {
+    display: 'flex';
+    justify-content: 'space-between';
+    margin-bottom: '20px';
+    box-sizing: border-box;
+    font-size: medium;
+    font-weight: 500;
+}
+
+.notes-box {
+    display: 'flex';
+    justify-content: 'space-between';
+    margin-bottom: '20px';
+    box-sizing: content-box;
+    font-size: medium;
+    font-weight: 300;
+}
+

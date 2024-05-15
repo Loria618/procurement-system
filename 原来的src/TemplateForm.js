@@ -215,7 +215,7 @@ function TemplateForm({ onBack, onTemplatesUpdated }) {
             ))}
           </thead>
           <Droppable droppableId="droppable">
-            {(provided, snapshot) => ( // 确保在这里使用provided参数
+            {(provided) => ( // 确保在这里使用provided参数
               <tbody {...getTableBodyProps()} ref={provided.innerRef} {...provided.droppableProps}>
                 {rows.map((row, index) => {
                   prepareRow(row);
