@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import CreateOrderForm from './CreateOrderForm';
-import SupplierInfo from './SupplierInfo';
+import CollapsibleTable from './CollapsibleTable';
+import SupplierDropdown from './SupplierDropdown';
 import db from './db';
+// procurement order
+import { v4 as uuidV4 } from 'uuid';
+import dayjs from 'dayjs';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
+import SaveIcon from '@mui/icons-material/Save';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 // styling
 import './styles.css';
 import Dialog from '@mui/material/Dialog';
@@ -10,243 +25,315 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/Button';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddCommentIcon from '@mui/icons-material/AddComment';
+import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 
-async function deleteCompany(companyName) {
-  try {
-    await db.transaction('rw', db.companies, async () => {
-      await db.companies.delete(companyName);
-    });
-    console.log("Company deleted successfully");
-  } catch (error) {
-    console.log("Error deleting company:", error);
-  }
+function createData(name, price, quantity = 1) {
+    const parsedPrice = parseFloat(price);
+    const parsedQuantity = parseInt(quantity, 10);
+    return {
+        name,
+        price: parsedPrice,
+        quantity: parsedQuantity,
+        totalPrice: parsedPrice * parsedQuantity
+    };
 }
 
-function CompanyDetails ({ company }) {
-  const [currentCompany, setCurrentCompany] = useState(company);
-  const [procurementOrders, setProcurementOrders] = useState([]);
-  const [showCreateOrderForm, setShowCreateOrderForm] = useState(false);
-  // const [isEditingCompanyName, setIsEditingCompanyName] = useState(false);
-  // const [isEditingNote, setIsEditingNote] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showDeleteOrdersAlert, setShowDeleteOrdersAlert] = useState(false);
-  const [deleteOrdersAlertMessage, setDeleteOrdersAlertMessage] = useState('');
+function CompanyDetails({ company }) {
+    const [itemName, setItemName] = useState('');
+    const [itemPrice, setItemPrice] = useState('');
+    const [itemQuantity, setItemQuantity] = useState('');
+    const [openAddItemDialog, setOpenAddItemDialog] = useState(false);
+    const [items, setItems] = useState([]);
+    const [openCreateOrderDialog, setOpenCreateOrderDialog] = useState(false);
+    const [orderTitle, setOrderTitle] = useState('');
+    const [errorMessage, setErrorMessage] = useState("");
+    const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
+    const [orders, setOrders] = useState([]);
+    const [selectedSupplier, setSelectedSupplier] = useState(null);
+    const [suppliers, setSuppliers] = useState([]);
 
-  useEffect(() => {
-    const fetchCompany = async () => {
-      const updatedCompany = await db.companies.get(company.name);
-      setCurrentCompany(updatedCompany);
+    const [editNote, setEditNote] = useState(false);
+    const [note, setNote] = useState(company.note);
+
+    const fetchOrders = async () => {
+        try {
+            const companyData = await db.companies.get(company.companyName);
+            if (companyData && Array.isArray(companyData.orders)) {
+                setOrders(companyData.orders);
+            } else {
+                setOrders([]);  // Initialize with an empty array if no orders are found
+            }
+        } catch (error) {
+            console.error("Error fetching orders:", error);
+            setOrders([]);  // Initialize with an empty array on error
+        }
     };
 
-    fetchCompany();
-  }, [company.name]);
-
-  const fetchOrders = async (company) => {
-    if (!company) {
-      console.error("No company provided to fetchOrders");
-      return;
-    }
-    try {
-      const orders = await db.procurementOrders.where('companyName').equals(company).toArray();
-      orders.sort((a, b) => b.creationDate - a.creationDate);
-      setProcurementOrders(orders);
-    } catch (error) {
-      console.error('Error fetching orders for company: ', company, error);
-    }
-  };
-
-
-  const handleNewOrder = () => {
-    setShowCreateOrderForm(true);
-  };
-
-  const handleBack = () => {
-    setShowCreateOrderForm(false);
-    // Fetch the updated company data after creating a new form
-    const fetchCompany = async () => {
-      const updatedCompany = await db.companies.get(company.name);
-      setCurrentCompany(updatedCompany);
+    const fetchSuppliers = async () => {
+        try {
+            const allSuppliers = await db.suppliers.toArray();
+            setSuppliers(allSuppliers);
+        } catch (error) {
+            console.error("Error fetching suppliers:", error);
+        }
     };
-    fetchCompany();
-  };
 
-  const handleCompanyDeleteConfirm = () => {
-    setShowDeleteConfirm(true);
-  }
+    useEffect(() => {
+        fetchOrders();
+        fetchSuppliers();
+        setNote(company.note);
+    }, [company, openSuccessDialog]);
 
-  // const handleFieldClick = (e, field, idx = null) => {
-  //   e.stopPropagation(); // Prevent event propagation
-  //   if (field === 'name') {
-  //     setIsEditingCompanyName(true);
-  //   } else {
-  //     setIsEditingNote(true);
-  //   }
-  // };
+    const handleAddItem = () => {
+        if (!itemName || !itemPrice || !itemQuantity) {
+            setOpenAddItemDialog(true);
+        } else {
+            const newItem = createData(itemName, parseFloat(itemPrice), parseInt(itemQuantity, 10));
+            setItems([...items, newItem]);
+            setItemName('');
+            setItemPrice('');
+            setItemQuantity('');
+        }
+    };
 
-  // const handleFieldBlur = async (field, idx = null) => {
-  //     if (field === 'name') {
-  //     setIsEditingCompanyName(false);
-  //     } else  {
-  //     setIsEditingNote(false);
-  //     } 
-  //     await saveChanges();
-  // };
+    const handleDeleteItem = (index) => {
+        setItems(items.filter((_, idx) => idx !== index));
+    };
 
-  // const handleDeleteOrder = async (procurementOrders) => {
-  //   // Make sure we actually have orders and the index is valid
-  //   if (currentCompany.procurementOrders && procurementOrders >= 0 && procurementOrders < currentCompany.procurementOrders.length) {
-  //     // Remove the form at the specified index
-  //     const updatedOrders = [
-  //       ...currentCompany.orders.slice(0, formIndex),
-  //       ...currentCompany.orders.slice(formIndex + 1)
-  //     ];
+    const handleCloseDialog = () => {
+        if (openCreateOrderDialog) {
+            setOpenCreateOrderDialog(false);
+        } else if (openAddItemDialog) {
+            setOpenAddItemDialog(false);
+        } else if (openSuccessDialog) {
+            setOpenSuccessDialog(false);
+        }
+        setErrorMessage("");
+    };
 
-  //     try {
-  //       // Update the company in IndexedDB with the new orders array
-  //       await db.companies.update(currentCompany.name, { orders: updatedOrders });
+    const handleTryToCreateOrder = () => {
+        if (items.length === 0) {
+            setOpenAddItemDialog(true);
+            return;
+        }
+        const orderData = {
+            uuid: uuidV4(),
+            createTime: dayjs(new Date()).format('YY-MM-DD HH:mm:ss'),
+            orderTitle: `${dayjs(new Date()).format('YY-MM-DD HH:mm:ss')}-${company.companyName}-${selectedSupplier?.supplierName || "NoSupplier"}`,
+            orderContents: items,
+            companyName: company.companyName,
+            supplierName: selectedSupplier?.supplierName || "",
+        };
+        handleCreateOrder(orderData);
+    };
 
-  //       // Update the local state with the updated orders
-  //       setCurrentCompany({ ...currentCompany, orders: updatedOrders });
-  //       setShowDeleteOrdersAlert(true);
-  //       setDeleteOrdersAlertMessage('已删除表单。');
-  //     } catch (error) {
-  //       console.error('Error deleting order:', error);
-  //       setShowDeleteOrdersAlert(true);
-  //       setDeleteOrdersAlertMessage('删除失败！');
-  //     }
-  //   } else {
-  //     setShowDeleteOrdersAlert(true);
-  //     setDeleteOrdersAlertMessage('表单索引无效，无法删除。');
-  //   }
-  // };
+    const handleCreateOrder = async (orderData) => {
+        try {
+            const companyData = await db.companies.get(company.companyName);
+            if (!companyData) {
+                alert("无法找到公司数据！");
+                return;
+            }
+            if (!Array.isArray(companyData.orders)) {
+                companyData.orders = [];  // Initialize orders array if it doesn't exist
+            }
+            const existingOrder = companyData.orders.find(t => t.uuid === orderData.uuid);
+            if (existingOrder) {
+                setErrorMessage("已存在相同id的订单，请重新创建订单。");
+                return;
+            }
+            setErrorMessage("");
+            companyData.orders.push(orderData);  // Add new order to the orders array
 
-  // const handleCloseDeleteOrdersAlert = () => {
-  //   setShowDeleteOrdersAlert(false);
-  //   setDeleteOrdersAlertMessage('');
-  // };
+            await db.companies.put(companyData);
+            console.log("Order created successfully!");
+            setOpenSuccessDialog(true);
+            setItems([]);
+        } catch (error) {
+            console.error("Error creating order:", error);
+            alert(`创建订单失败！错误信息: ${error.message}`);
+        }
+    };
 
-  // const saveChanges = async () => {
-  //   try {
-  //     await db.transaction('rw', db.companies, async () => {
-  //       await db.companies.put(currentCompany);
-  //     });
-  //     console.log("Company updated successfully.");
-  //   } catch (error) {
-  //     console.log("Error updating company:", error);
-  //   };
+    const handleSaveNote = async () => {
+        try {
+            await db.companies.update(company.companyName, { note });
+            setEditNote(false);
+            console.log("Note updated successfully!");
+        } catch (error) {
+            console.error("Error updating note:", error);
+        }
+    };
 
-  //   const handleCompanyDeleteConfirm = () => {
-  //     setShowDeleteConfirm(true);
-  //   };
+    const handleBackToMainPage = () => {
+        window.location.reload();
+    };
 
-  //   const handleCancelDelete = () => {
-  //     setShowDeleteConfirm(false);
-  //   };
-
-  //   const handleSave = () => {
-  //     saveChanges();
-  //   };
-
-  //   const handleRedirectToSupplierInfo = () => {
-  //     // Redirect to the supplier info page
-  //     return (<SupplierInfo companyName={currentCompany.name} onBack={handleBack} />)
-  //   }
+    const handleSelectTemplate = (templateContents) => {
+        const newItems = templateContents.map(item => createData(item.name, item.price, 1));
+        setItems(newItems);
+    };
 
     return (
-      <div>
-        <h2>{currentCompany.name}</h2>
-        <p>{currentCompany.note}</p>
-        {/* {showCreateOrderForm ? (
-          <CreateOrderForm companyName={currentCompany.name} handleRedirectToSupplierInfo={handleRedirectToSupplierInfo} />
-        ) : isEditingCompanyName ? (
-          <input
-            type="text"
-            autoFocus
-            value={currentCompany.name}
-            onBlur={() => handleFieldBlur('name')}
-            onChange={(e) => setCurrentCompany({ ...currentCompany, name: e.target.value })}
-          />
-        ) : (
-          <h2 onClick={(e) => handleFieldClick(e, 'name')}>{currentCompany.name}</h2>
-        )}
-
-        {isEditingNote ? (
-          <textarea
-            autoFocus
-            value={currentCompany.note}
-            onBlur={() => handleFieldBlur('note')}
-            onChange={(e) => setCurrentCompany({ ...currentCompany, note: e.target.value })}
-          />
-        ) : (
-          <p onClick={(e) => handleFieldClick(e, 'note')}>{currentCompany.note}</p>
-        )} */}
-
-
-        <table>
-          <thead>
-            <tr>
-              <th>供应商名称</th>
-              <th>进货日期</th>
-            </tr>
-          </thead>
-          <tbody>
-            {procurementOrders.length > 0 ? (
-              procurementOrders.map((order) => (
-                <tr key={order.id}>
-                  <td>{order.supplierName}</td>
-                  <td>{order.date.toLocaleDateString()}</td>
-                </tr>
-              ))
-            ) : (
-              <tr><td colSpan="2">暂无进货订单</td></tr>
-            )}
-          </tbody>
-        </table>
-        <Button onClick={handleCompanyDeleteConfirm}>删除公司</Button>
-        <Dialog open={showDeleteConfirm}>
-          <DialogTitle>确定要删除该公司吗？</DialogTitle>
-          <DialogContent>
-            <DialogContentText>这将删除该公司包括进货订单在内的所有信息，确定吗？</DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={deleteCompany}>确认删除</Button>
-            {/* <Button onClick={handleCancelDelete}>取消</Button> */}
-          </DialogActions>
-        </Dialog>
-        {/* <Button onClick={handleSave}>保存公司信息</Button> */}
-        <Button onClick={handleNewOrder}>新建进货订单</Button>
-        <h1>全部进货表单</h1>
         <div>
-          {currentCompany.forms && currentCompany.forms.length > 0 ? (
-            currentCompany.forms.map((form, index) => (
-              <div key={index}>
-                <h2>{form.date}</h2>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>供应商</th>
-                      <th>订单创建日期</th>
-                      <th>总价</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {procurementOrders.items.map((item, idx) => (
-                      <tr key={idx}> {/* Use the unique key for each item */}
-                        <td>{item.supplierName}</td>
-                        <td>{item.creationDate}</td>
-                        <td>{(item.quantity) * (item.unitPrice)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))
-          ) : (
-            <p>暂无表单。</p>
-          )}
+            <h2>{company.companyName}进货订单</h2>
+            {editNote ? (
+                <div>
+                    <TextField
+                        type="text"
+                        label="备注"
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        autoFocus
+                    />
+                    <Button onClick={handleSaveNote}>保存</Button>
+                    <Button onClick={() => setEditNote(false)}>取消</Button>
+                </div>
+            ) : (
+                <div>
+                    <p>{note}</p>
+                    <Button onClick={() => setEditNote(true)} startIcon={<AddCommentIcon />}>编辑备注</Button>
+                </div>
+            )}
+            <div>
+                <SupplierDropdown
+                    suppliers={suppliers}
+                    onSelectSupplier={(supplier) => setSelectedSupplier(supplier)}
+                    onSelectTemplate={handleSelectTemplate}
+                />
+            </div>
+            <div>
+                <Box
+                    component="form"
+                    sx={{
+                        '& > :not(style)': { m: 1, width: '25ch' },
+                    }}
+                    noValidate
+                    autoComplete="on" // 
+                >
+                    <TextField type="text" className="item-input" label="商品名称" variant="outlined" value={itemName} onChange={(e) => setItemName(e.target.value)} />
+                    <TextField type="number" className="item-input" label="商品价格" variant="outlined" value={itemPrice} onChange={(e) => setItemPrice(e.target.value)} />
+                    <TextField type="number" className="item-input" label="商品数量" variant="outlined" value={itemQuantity} onChange={(e) => setItemQuantity(e.target.value)} />
+                </Box>
+                <Button className="add-item-btn" tabIndex={-1} onClick={handleAddItem} startIcon={<AddShoppingCartIcon />}>添加商品</Button>
+                <Dialog open={openAddItemDialog} onClose={() => setOpenAddItemDialog(false)}>
+                    <DialogTitle>{"商品名称、单价和数量不可留空"}</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            请输入商品名称、单价和数量。
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button className="confirm-btn" onClick={() => setOpenAddItemDialog(false)} autoFocus>好的</Button>
+                    </DialogActions>
+                </Dialog>
+
+                <TableContainer component={Paper} className="new-temp-table-container">
+                    <Table aria-label="item table">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell className="new-temp-table-cell">商品名称</TableCell>
+                                <TableCell className="new-temp-table-cell" align="right">商品价格</TableCell>
+                                <TableCell className="new-temp-table-cell" align="right">商品数量</TableCell>
+                                <TableCell className="new-temp-table-cell" align="right">商品总价</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {items.map((item, index) => (
+                                <TableRow key={index}>
+                                    <TableCell className="new-temp-table-cell" component="th" scope="row">
+                                        <TextField value={item.name} onChange={(e) => {
+                                            const newItems = [...items];
+                                            newItems[index].name = e.target.value;
+                                            setItems(newItems);
+                                        }} />
+                                    </TableCell>
+                                    <TableCell className="new-temp-table-cell" align="right">
+                                        <TextField value={item.price} type="number" onChange={(e) => {
+                                            const newItems = [...items];
+                                            newItems[index].price = parseFloat(e.target.value);
+                                            newItems[index].totalPrice = newItems[index].price * newItems[index].quantity;
+                                            setItems(newItems);
+                                        }} />
+                                    </TableCell>
+                                    <TableCell className="new-temp-table-cell" align="right">
+                                        <TextField value={item.quantity} type="number" onChange={(e) => {
+                                            const newItems = [...items];
+                                            newItems[index].quantity = parseInt(e.target.value, 10);
+                                            newItems[index].totalPrice = newItems[index].price * newItems[index].quantity;
+                                            setItems(newItems);
+                                        }} />
+                                    </TableCell>
+                                    <TableCell className="new-temp-table-cell" align="right">
+                                        {item.totalPrice.toFixed(2)}
+                                    </TableCell>
+                                    <TableCell className="new-temp-table-cell" align="right">
+                                        <Button className='delete-btn' onClick={() => handleDeleteItem(index)} startIcon={<DeleteIcon />} color="error">删除商品</Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+                <div>
+                    <Button startIcon={<SaveIcon />} onClick={handleTryToCreateOrder}>
+                        为{company.companyName}创建进货订单
+                    </Button>
+                    <Dialog open={openCreateOrderDialog} onClose={handleCloseDialog}>
+                        <DialogTitle>为{company.companyName}创建订单</DialogTitle>
+                        <DialogContent>
+                            <DialogContentText>
+                                订单名称
+                            </DialogContentText>
+                            <TextField
+                                autoFocus
+                                margin="dense"
+                                id="order-title"
+                                label="订单名称"
+                                type="text"
+                                fullWidth
+                                variant="standard"
+                                value={orderTitle}
+                                onChange={(e) => {
+                                    setOrderTitle(e.target.value);
+                                    if (errorMessage) setErrorMessage("");
+                                }}
+                            />
+                            {errorMessage && (
+                                <Alert variant="outlined" severity="error">
+                                    {errorMessage}
+                                </Alert>
+                            )}
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={handleCloseDialog}>取消</Button>
+                            <Button onClick={handleTryToCreateOrder}>创建订单</Button>
+                        </DialogActions>
+                    </Dialog>
+                    <Dialog open={openSuccessDialog} onClose={handleCloseDialog}>
+                        <DialogTitle>{"创建成功"}</DialogTitle>
+                        <DialogContent>
+                            <DialogContentText>成功为{company.companyName}创建订单。供货商：{selectedSupplier?.supplierName}</DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button className="confirm-btn" onClick={handleCloseDialog} autoFocus>好的</Button>
+                        </DialogActions>
+                    </Dialog>
+                </div>
+            </div>
+            <div>
+                {/* {orders.length > 0 && (
+                    <CollapsibleTable templates={selectedSupplier?.template || []} />
+                )} */}
+            </div>
+            <div>
+                <Button onClick={handleBackToMainPage} startIcon={<HomeRoundedIcon />}>返回首页</Button>
+            </div>
         </div>
-      </div>
     );
-  };
-// }
+}
+
 export default CompanyDetails;

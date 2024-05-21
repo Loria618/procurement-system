@@ -35,7 +35,7 @@ const MainPage = () => {
   useEffect(() => {
     fetchCompanies();
     fetchSuppliers();
-  }, [companies, suppliers]);
+  }, []);
 
   const fetchCompanies = async () => {
     const allCompanies = await db.companies.toArray();
@@ -120,7 +120,7 @@ const MainPage = () => {
           <div className="button-container">
             <div className="button-wrapper">
               {companies.length > 0 && (
-                <React.Fragment>
+                <>
                   <ButtonGroup variant="contained" ref={companyAnchorRef} aria-label="company selection">
                     <Button onClick={toggleCompanyMenu}
                       size="medium"
@@ -139,8 +139,8 @@ const MainPage = () => {
                           <ClickAwayListener onClickAway={(event) => handleClose(event, 'company')}>
                             <MenuList>
                               {companies.map((company) => (
-                                <MenuItem key={company.name} onClick={() => handleCompanyClick(company.name)} className="menu-item">
-                                  {company.name}
+                                <MenuItem key={company.companyName} onClick={() => handleCompanyClick(company.companyName)} className="menu-item">
+                                  {company.companyName}
                                 </MenuItem>
                               ))}
                             </MenuList>
@@ -149,12 +149,12 @@ const MainPage = () => {
                       </Grow>
                     )}
                   </Popper>
-                </React.Fragment>
+                </>
               )}
             </div>
             <div className="button-wrapper">
               {suppliers.length > 0 && (
-                <React.Fragment>
+                <>
                   <ButtonGroup variant="contained" ref={supplierAnchorRef} aria-label="supplier selection">
                     <Button onClick={toggleSupplierMenu}
                       size="medium"
@@ -173,17 +173,17 @@ const MainPage = () => {
                           <ClickAwayListener onClickAway={(event) => handleClose(event, 'supplier')}>
                             <MenuList>
                               {suppliers.map((supplier) => (
-                                <MenuItem key={supplier.name} onClick={() => handleSupplierClick(supplier.name)} className="menu-item">
-                                  {supplier.name}
+                                <MenuItem key={supplier.supplierName} onClick={() => handleSupplierClick(supplier.supplierName)} className="menu-item">
+                                  {supplier.supplierName}
                                 </MenuItem>
                               ))}
                             </MenuList>
-                          </ClickAwayListener
-                          ></Paper>
+                          </ClickAwayListener>
+                        </Paper>
                       </Grow>
                     )}
                   </Popper>
-                </React.Fragment>
+                </>
               )}
             </div>
           </div>

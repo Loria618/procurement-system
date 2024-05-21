@@ -2,9 +2,12 @@ import Dexie from 'dexie';
 
 const db = new Dexie('MyDatabase');
 db.version(1).stores({
-  companies: '&name', 
-  suppliers: '&name', 
-  procurementOrders: '++id, companyName, supplierName, itemName, quantity, unitPrice, totalPrice, creationDate' 
+  companies: '&companyName',
+  suppliers: '&supplierName'
+});
+
+db.open().catch((err) => {
+  console.error("Open failed: " + err.stack);
 });
 
 export default db;

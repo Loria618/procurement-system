@@ -2,6 +2,7 @@
 
 body {
     margin-left: 20px;
+    margin-right: 20px;
 }
 
 /* elements */
@@ -15,41 +16,19 @@ h2 {
     font-weight: bold;
 }
 
+.new-temp-table-container {
+    width: 100%;
+    /* 容器宽度为100% */
+    overflow-x: auto;
+    /* 在需要时允许水平滚动 */
+    margin-bottom: 20px;
+}
+
+.new-temp-table-cell {
+    width: auto;
+}
+
 /* buttons */
-
-.new-btn {
-    display: 'block';
-    margin-bottom: '10px';
-}
-
-.delete-btn {
-    display: 'block';
-    margin-bottom: '10px';
-}
-
-.confirm-btn {
-    display: block;
-    margin-bottom: '10px';
-}
-
-.confirm-delete-btn {
-    display: 'block';
-    margin-bottom: '10px';
-}
-
-.cancel-btn {
-    display: 'block';
-    margin-bottom: '10px';
-}
-
-.save-btn {
-    display: 'block';
-    margin-bottom: '10px';
-}
-
-.add-item-btn {
-    outline: auto;
-}
 
 .button-container {
     position: relative !important;
@@ -93,6 +72,11 @@ h2 {
     /* 设定宽度为内容的最大宽度 */
 }
 
+.table-container {
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
+}
+
 /* text-boxes */
 
 .company-name-box {
@@ -112,4 +96,3 @@ h2 {
     font-size: medium;
     font-weight: 300;
 }
-

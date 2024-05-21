@@ -9,11 +9,11 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/Button';
+import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 
 function CompanyInfo() {
-  const [name, setName] = useState('');
-  const [note, setNote] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [note, setNote] = useState('');
   const [redirectToCompanyDetails, setRedirectToCompanyDetails] = useState(false);
   const [openSuccessDialog, setOpenSuccessDialog] = useState(false); // set the state for the success dialog
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false); // set the state for the confirm dialog
@@ -21,8 +21,8 @@ function CompanyInfo() {
   const handleCheckCompanyName = async () => {
     console.log('Checking company name...');
     try {
-      const existingCompany = await db.companies.get(name); // check if the company name already exists
-      if (!name) {
+      const existingCompany = await db.companies.get(companyName); // check if the company name already exists
+      if (!companyName) {
         setOpenConfirmDialog(true); // show the confirm dialog if the company name is empty
       } else if (existingCompany) {
         setOpenConfirmDialog(true); // show the confirm dialog if the company name already exists
@@ -37,7 +37,7 @@ function CompanyInfo() {
   const saveCompanyInfo = async () => {
     console.log('Saving company info...');
     try {
-      await db.companies.add({ name, note });
+      await db.companies.add({ companyName, note });
       setOpenSuccessDialog(true); // show the success dialog after saving the company info
     } catch (error) {
       console.error('Error in saving company information: ', error);
@@ -59,11 +59,11 @@ function CompanyInfo() {
     console.log('Editing existing company...');
     setOpenConfirmDialog(false);
     setRedirectToCompanyDetails(true); // redirect to the company details page
-    setCompanyName(name)
+    setCompanyName(companyName)
   };
 
   if (redirectToCompanyDetails) {
-    return <CompanyDetails company={{ name: companyName }} />;
+    return <CompanyDetails company={{ companyName: companyName }} />;
   };
 
   const showDialog = () => {
@@ -81,7 +81,7 @@ function CompanyInfo() {
           </DialogActions>
         </Dialog>
       );
-    } else if (!name) {
+    } else if (!companyName) {
       console.log('Confirm dialog is open: Company name is empty.');
       return (
         <Dialog open={openConfirmDialog} onClose={() => setOpenConfirmDialog(false)}>
@@ -98,18 +98,22 @@ function CompanyInfo() {
       console.log('Confirm dialog is open: Company already exists.');
       return (
         <Dialog open={openConfirmDialog} onClose={() => setOpenConfirmDialog(false)}>
-          <DialogTitle>{`已存在“${name}”`}</DialogTitle>
+          <DialogTitle>{`已存在“${companyName}”`}</DialogTitle>
           <DialogContent>
-            <DialogContentText>{`前往编辑“${name}”的信息还是继续添加其他公司？`}</DialogContentText>
+            <DialogContentText>{`前往编辑“${companyName}”的信息还是继续添加其他公司？`}</DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button className="confirm-btn" onClick={handleEditExisting} autoFocus>{`前往${name}详情页面进行编辑`}</Button>
+            <Button className="confirm-btn" onClick={handleEditExisting} autoFocus>{`前往${companyName}详情页面进行编辑`}</Button>
             <Button className="cancel-btn" onClick={handleContinueAdding}>继续添加其他公司</Button>
           </DialogActions>
         </Dialog>
       );
     }
   };
+
+  const handleBackToMainPage = () => {
+    window.location.reload();
+  }
 
   return (
     <div>
@@ -121,13 +125,16 @@ function CompanyInfo() {
         <h2>新建公司</h2>
         <div>
           <label>公司名称：</label>
-          <input type="text" className="company-name-box" placeholder="请输入公司名称（必填）" value={name} onChange={(e) => setName(e.target.value)} autoFocus/>
+          <input type="text" className="company-name-box" placeholder="请输入公司名称（必填）" value={companyName} onChange={(e) => setCompanyName(e.target.value)} autoFocus />
         </div>
         <div>
           <label>公司备注：</label>
           <textarea className="notes-box" placeholder="请输入公司备注（可选）" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
         <Button className="save-btn" onClick={handleCheckCompanyName}>保存公司信息</Button>
+      </div>
+      <div>
+        <Button onClick={handleBackToMainPage} startIcon={<HomeRoundedIcon />}>返回首页</Button>
       </div>
     </div>
   );
