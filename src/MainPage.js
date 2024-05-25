@@ -4,6 +4,7 @@ import SupplierDetails from './SupplierDetails';
 import CompanyInfo from './CompanyInfo';
 import CompanyDetails from './CompanyDetails';
 import db from './db';
+import dayjs from 'dayjs';
 // styling
 import './styles.css';
 import Button from '@mui/material/Button';
@@ -15,6 +16,11 @@ import Paper from '@mui/material/Paper';
 import Popper from '@mui/material/Popper';
 import MenuItem from '@mui/material/MenuItem';
 import MenuList from '@mui/material/MenuList';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 
 const MainPage = () => {
   const [companies, setCompanies] = useState([]);
@@ -31,11 +37,14 @@ const MainPage = () => {
   const companyAnchorRef = useRef(null);
   const supplierAnchorRef = useRef(null);
 
+  const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogContent, setDialogContent] = useState('');
 
   useEffect(() => {
     fetchCompanies();
     fetchSuppliers();
-  }, []);
+  }, [companies, suppliers]);
 
   const fetchCompanies = async () => {
     const allCompanies = await db.companies.toArray();
@@ -102,6 +111,92 @@ const MainPage = () => {
     } else {
       setOpenSupplierMenu(false);
     }
+  };
+
+  const handleCloseDialog = () => {
+    setOpenSuccessDialog(false);
+  };
+
+  const handleExportJSON = async () => {
+    try {
+      const companies = await db.companies.toArray();
+      const suppliers = await db.suppliers.toArray();
+
+      console.log('Exporting companies:', companies);
+      console.log('Exporting suppliers:', suppliers);
+
+      const data = {
+        companies,
+        suppliers
+      };
+
+      const dataStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const timestamp = dayjs().format('YYYY-MM-DD_HH-mm-ss');
+      const filename = `data_${timestamp}.json`;
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      setDialogTitle('导出成功');
+      setDialogContent(`已成功导出 ${companies.length} 条公司数据和 ${suppliers.length} 条供应商数据`);
+      setOpenSuccessDialog(true);
+    } catch (error) {
+      console.error('Error exporting JSON:', error);
+    }
+  };
+
+  const handleImportJSON = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+
+    input.addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const importedData = JSON.parse(e.target.result);
+            console.log('Imported data:', importedData);
+
+            if (importedData.companies && importedData.suppliers) {
+              const validCompanies = importedData.companies.every(company => company.companyName);
+              const validSuppliers = importedData.suppliers.every(supplier => supplier.supplierName);
+
+              if (validCompanies && validSuppliers) {
+                console.log('Importing companies:', importedData.companies);
+                console.log('Importing suppliers:', importedData.suppliers);
+
+                await db.transaction('rw', db.companies, db.suppliers, async () => {
+                  await db.companies.clear();
+                  await db.suppliers.clear();
+                  await db.companies.bulkAdd(importedData.companies);
+                  await db.suppliers.bulkAdd(importedData.suppliers);
+                });
+                setDialogTitle('导入成功');
+                setDialogContent(`已成功导入 ${companies.length} 条公司数据和 ${suppliers.length} 条供应商数据`);
+                setOpenSuccessDialog(true);
+              } else {
+                alert('Invalid JSON format: Missing key fields');
+              }
+            } else {
+              alert('Invalid JSON format');
+            }
+          } catch (error) {
+            console.error('Error importing JSON:', error);
+          }
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    input.click();
   };
 
   function getContent() {
@@ -196,6 +291,27 @@ const MainPage = () => {
                 <Button className="new-btn" onClick={handleNewSupplier}>新建供应商信息</Button>
               </div>
             </ButtonGroup>
+          </div>
+          <div className="button-container">
+            <ButtonGroup variant="outlined" aria-label="outlined button group">
+              <div>
+                <Button className="json-btn" onClick={handleExportJSON}>导出JSON文件到本地</Button>
+              </div>
+              <div>
+                <Button className="json-btn" onClick={handleImportJSON}>导入本地JSON数据</Button>
+              </div>
+            </ButtonGroup>
+            <div>
+              <Dialog open={openSuccessDialog} onClose={handleCloseDialog}>
+                <DialogTitle>{dialogTitle}</DialogTitle>
+                <DialogContent>
+                  <DialogContentText>{dialogContent}</DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                  <Button className="confirm-btn" onClick={handleCloseDialog} autoFocus>好的</Button>
+                </DialogActions>
+              </Dialog>
+            </div>
           </div>
         </div>
       );

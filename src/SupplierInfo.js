@@ -15,19 +15,19 @@ function SupplierInfo() {
   const [supplierName, setSupplierName] = useState('');
   const [note, setNote] = useState('');
   const [redirectToSupplierDetails, setRedirectToSupplierDetails] = useState(false);
-  const [openSuccessDialog, setOpenSuccessDialog] = useState(false); // set the state for the success dialog
-  const [openConfirmDialog, setOpenConfirmDialog] = useState(false); // set the state for the confirm dialog
+  const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
 
   const handleCheckSupplierName = async () => {
     console.log('Checking supplier name...');
     try {
       const existingSupplier = await db.suppliers.get(supplierName); // check if the supplier name already exists
       if (!supplierName) {
-        setOpenConfirmDialog(true); // show the confirm dialog if the supplier name is empty
+        setOpenConfirmDialog(true);
       } else if (existingSupplier) {
-        setOpenConfirmDialog(true); // show the confirm dialog if the supplier name already exists
+        setOpenConfirmDialog(true);
       } else {
-        saveSupplierInfo(); // save the supplier info
+        saveSupplierInfo();
       }
     } catch (error) {
       console.error('Error in checking supplier name: ', error);
@@ -38,7 +38,7 @@ function SupplierInfo() {
     console.log('Saving supplier info...');
     try {
       await db.suppliers.add({ supplierName, note });
-      setOpenSuccessDialog(true); // show the success dialog after saving the supplier info
+      setOpenSuccessDialog(true);
     } catch (error) {
       console.error('Error in saving supplier information: ', error);
     }
@@ -46,19 +46,19 @@ function SupplierInfo() {
 
   const handleCloseSuccess = () => {
     console.log('Closing success dialog...');
-    setOpenSuccessDialog(false); // close the success dialog
-    window.location.reload(); // reload the whole webpage
+    setOpenSuccessDialog(false);
+    window.location.reload();
   };
 
   const handleContinueAdding = () => {
     console.log('Continuing to add...');
-    setOpenConfirmDialog(false); // close the sucess dialog and continue adding
+    setOpenConfirmDialog(false);
   };
 
   const handleEditExisting = () => {
     console.log('Editing existing supplier...');
     setOpenConfirmDialog(false);
-    setRedirectToSupplierDetails(true); // redirect to the supplier details page
+    setRedirectToSupplierDetails(true);
     setSupplierName(supplierName)
   };
 

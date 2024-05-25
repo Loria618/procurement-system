@@ -3,6 +3,7 @@ import MainPage from './MainPage';
 import './styles.css';
 
 /*
+2024.5.26 MainPage导入JSON文件至空database时，无法显示导入数据的数量。
 2024.3.9
 MainPage初始显示三家公司（名称可编辑），点击公司之后是新建供货公司和新建表单的选项。并且可以添加新的采购公司。
 新建采购表单的日期为当前日期的后一天，并且生成唯一id，方便后续查找。

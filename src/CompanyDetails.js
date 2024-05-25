@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import CollapsibleTable from './CollapsibleTable';
 import SupplierDropdown from './SupplierDropdown';
 import db from './db';
+import CollapsibleOrder from './CollapsibleOrder';
 // procurement order
 import { v4 as uuidV4 } from 'uuid';
 import dayjs from 'dayjs';
@@ -16,7 +16,6 @@ import TextField from '@mui/material/TextField';
 import SaveIcon from '@mui/icons-material/Save';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 // styling
 import './styles.css';
 import Dialog from '@mui/material/Dialog';
@@ -49,9 +48,10 @@ function CompanyDetails({ company }) {
     const [items, setItems] = useState([]);
     const [openCreateOrderDialog, setOpenCreateOrderDialog] = useState(false);
     const [orderTitle, setOrderTitle] = useState('');
-    const [errorMessage, setErrorMessage] = useState("");
+    const [errorMessage, setErrorMessage] = useState('');
     const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
     const [orders, setOrders] = useState([]);
+    const [openDeleOrderDialog, setOpenDeleOrderDialog] = useState(false);
     const [selectedSupplier, setSelectedSupplier] = useState(null);
     const [suppliers, setSuppliers] = useState([]);
 
@@ -64,11 +64,11 @@ function CompanyDetails({ company }) {
             if (companyData && Array.isArray(companyData.orders)) {
                 setOrders(companyData.orders);
             } else {
-                setOrders([]);  // Initialize with an empty array if no orders are found
+                setOrders([]);
             }
         } catch (error) {
             console.error("Error fetching orders:", error);
-            setOrders([]);  // Initialize with an empty array on error
+            setOrders([]);
         }
     };
 
@@ -86,6 +86,20 @@ function CompanyDetails({ company }) {
         fetchSuppliers();
         setNote(company.note);
     }, [company, openSuccessDialog]);
+
+    const handleDeleteOrder = async (uuid) => {
+        try {
+            const companyData = await db.companies.get(company.companyName);
+            if (companyData && Array.isArray(companyData.orders)) {
+                const updatedOrders = companyData.orders.filter(order => order.uuid !== uuid);
+                await db.companies.update(company.companyName, { orders: updatedOrders });
+                setOrders(updatedOrders);
+                setOpenDeleOrderDialog(true);
+            }
+        } catch (error) {
+            console.error('Failed to delete order', error);
+        }
+    };
 
     const handleAddItem = () => {
         if (!itemName || !itemPrice || !itemQuantity) {
@@ -110,6 +124,8 @@ function CompanyDetails({ company }) {
             setOpenAddItemDialog(false);
         } else if (openSuccessDialog) {
             setOpenSuccessDialog(false);
+        } else if (openDeleOrderDialog) {
+            setOpenDeleOrderDialog(false);
         }
         setErrorMessage("");
     };
@@ -119,10 +135,14 @@ function CompanyDetails({ company }) {
             setOpenAddItemDialog(true);
             return;
         }
+        const createTime = dayjs(new Date()).format('YY-MM-DD HH:mm:ss');
+        const orderEffective = dayjs(new Date()).add(1, 'day').format('YY-MM-DD');
+
         const orderData = {
             uuid: uuidV4(),
-            createTime: dayjs(new Date()).format('YY-MM-DD HH:mm:ss'),
-            orderTitle: `${dayjs(new Date()).format('YY-MM-DD HH:mm:ss')}-${company.companyName}-${selectedSupplier?.supplierName || "NoSupplier"}`,
+            createTime,
+            orderEffective,
+            orderTitle: `${orderEffective}-${company.companyName}-${selectedSupplier?.supplierName || "NoSupplier"}`,
             orderContents: items,
             companyName: company.companyName,
             supplierName: selectedSupplier?.supplierName || "",
@@ -236,9 +256,10 @@ function CompanyDetails({ company }) {
                         <TableHead>
                             <TableRow>
                                 <TableCell className="new-temp-table-cell">商品名称</TableCell>
-                                <TableCell className="new-temp-table-cell" align="right">商品价格</TableCell>
-                                <TableCell className="new-temp-table-cell" align="right">商品数量</TableCell>
+                                <TableCell className="new-temp-table-cell" align="right" style={{ width: '80px' }}>商品价格</TableCell>
+                                <TableCell className="new-temp-table-cell" align="right" style={{ width: '80px' }}>商品数量</TableCell>
                                 <TableCell className="new-temp-table-cell" align="right">商品总价</TableCell>
+                                <TableCell className="new-temp-table-cell" align="right">删除商品</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -251,7 +272,7 @@ function CompanyDetails({ company }) {
                                             setItems(newItems);
                                         }} />
                                     </TableCell>
-                                    <TableCell className="new-temp-table-cell" align="right">
+                                    <TableCell className="new-temp-table-cell" align="right" style={{ width: '100px' }}>
                                         <TextField value={item.price} type="number" onChange={(e) => {
                                             const newItems = [...items];
                                             newItems[index].price = parseFloat(e.target.value);
@@ -259,7 +280,7 @@ function CompanyDetails({ company }) {
                                             setItems(newItems);
                                         }} />
                                     </TableCell>
-                                    <TableCell className="new-temp-table-cell" align="right">
+                                    <TableCell className="new-temp-table-cell" align="right" style={{ width: '100px' }}>
                                         <TextField value={item.quantity} type="number" onChange={(e) => {
                                             const newItems = [...items];
                                             newItems[index].quantity = parseInt(e.target.value, 10);
@@ -325,9 +346,20 @@ function CompanyDetails({ company }) {
                 </div>
             </div>
             <div>
-                {/* {orders.length > 0 && (
-                    <CollapsibleTable templates={selectedSupplier?.template || []} />
-                )} */}
+                {orders.length > 0 && (
+                    <CollapsibleOrder orders={orders} handleDeleteOrder={handleDeleteOrder} />
+                )}
+            </div>
+            <div>
+                <Dialog open={openDeleOrderDialog} onClose={handleCloseDialog}>
+                    <DialogTitle>{"删除成功"}</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>成功删除了订单。</DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button className="confirm-btn" onClick={handleCloseDialog} autoFocus>好的</Button>
+                    </DialogActions>
+                </Dialog>
             </div>
             <div>
                 <Button onClick={handleBackToMainPage} startIcon={<HomeRoundedIcon />}>返回首页</Button>
