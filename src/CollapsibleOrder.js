@@ -22,7 +22,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
 function Row(props) {
-  const { row, handleDeleteOrder } = props;
+  const { row, handleDeleteOrder, showDeleteButton } = props;
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -46,14 +46,16 @@ function Row(props) {
           {row.orderContents.reduce((total, item) => total + item.totalPrice, 0).toFixed(2)}
         </TableCell>
         <TableCell align="right">
-          <Button
-            className='delete-btn'
-            onClick={() => handleDeleteOrder(row.uuid)}
-            startIcon={<DeleteIcon />}
-            color="error"
-          >
-            删除订单
-          </Button>
+          {showDeleteButton && (
+            <Button
+              className='delete-btn'
+              onClick={() => handleDeleteOrder(row.uuid)}
+              startIcon={<DeleteIcon />}
+              color="error"
+            >
+              删除订单
+            </Button>
+          )}
         </TableCell>
       </TableRow>
       <TableRow>
@@ -83,6 +85,11 @@ function Row(props) {
                       <TableCell align="right">{item.totalPrice.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
+                  <TableRow>
+                    <TableCell colSpan={2} />
+                    <TableCell align="right"><strong>订单总价</strong></TableCell>
+                    <TableCell align="right"><strong>{row.orderContents.reduce((total, item) => total + item.totalPrice, 0).toFixed(2)}</strong></TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
             </Box>
@@ -108,9 +115,10 @@ Row.propTypes = {
     uuid: PropTypes.string.isRequired,
   }).isRequired,
   handleDeleteOrder: PropTypes.func.isRequired,
+  showDeleteButton: PropTypes.bool.isRequired,
 };
 
-export default function CollapsibleOrder({ orders = [], handleDeleteOrder }) {
+export default function CollapsibleOrder({ orders = [], handleDeleteOrder, showDeleteButton = true }) {
   const sortedOrders = [...orders].sort((a, b) => {
     const dateA = dayjs(a.createTime, 'YY-MM-DD HH:mm:ss');
     const dateB = dayjs(b.createTime, 'YY-MM-DD HH:mm:ss');
@@ -132,7 +140,7 @@ export default function CollapsibleOrder({ orders = [], handleDeleteOrder }) {
         </TableHead>
         <TableBody>
           {sortedOrders.map((order, index) => (
-            <Row key={index} row={order} handleDeleteOrder={handleDeleteOrder} />
+            <Row key={index} row={order} handleDeleteOrder={handleDeleteOrder} showDeleteButton={showDeleteButton} />
           ))}
         </TableBody>
       </Table>
@@ -157,4 +165,5 @@ CollapsibleOrder.propTypes = {
     }).isRequired
   ).isRequired,
   handleDeleteOrder: PropTypes.func.isRequired,
+  showDeleteButton: PropTypes.bool,
 };

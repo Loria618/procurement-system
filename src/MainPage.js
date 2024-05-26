@@ -3,6 +3,7 @@ import SupplierInfo from './SupplierInfo';
 import SupplierDetails from './SupplierDetails';
 import CompanyInfo from './CompanyInfo';
 import CompanyDetails from './CompanyDetails';
+import FilterOrders from './FilterOrders';
 import db from './db';
 import dayjs from 'dayjs';
 // styling
@@ -31,6 +32,7 @@ const MainPage = () => {
   const [showCompanyDetails, setShowCompanyDetails] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [showFilterOrders, setShowFilterOrders] = useState(false);
 
   const [openCompanyMenu, setOpenCompanyMenu] = useState(false);
   const [openSupplierMenu, setOpenSupplierMenu] = useState(false);
@@ -91,6 +93,14 @@ const MainPage = () => {
     setShowCompanyForm(false);
     setShowSupplierInfo(false);
   };
+
+  const handleFilterOrders = () => {
+    setShowFilterOrders(true);
+    setShowCompanyDetails(false);
+    setShowCompanyForm(false);
+    setShowSupplierInfo(false);
+    setShowSupplierDetails(false);
+  }
 
   const toggleCompanyMenu = () => {
     setOpenCompanyMenu((prevOpen) => !prevOpen);
@@ -179,8 +189,9 @@ const MainPage = () => {
                   await db.companies.bulkAdd(importedData.companies);
                   await db.suppliers.bulkAdd(importedData.suppliers);
                 });
+
                 setDialogTitle('导入成功');
-                setDialogContent(`已成功导入 ${companies.length} 条公司数据和 ${suppliers.length} 条供应商数据`);
+                setDialogContent(`已成功导入 ${importedData.companies.length} 条公司数据和 ${importedData.suppliers.length} 条供应商数据`);
                 setOpenSuccessDialog(true);
               } else {
                 alert('Invalid JSON format: Missing key fields');
@@ -208,6 +219,8 @@ const MainPage = () => {
       return <CompanyDetails company={selectedCompany} onUpdate={fetchCompanies} />;
     } else if (showSupplierDetails && selectedSupplier) {
       return <SupplierDetails supplier={selectedSupplier} onUpdate={fetchSuppliers} />;
+    } else if (showFilterOrders) {
+      return <FilterOrders />;
     } else {
       return (
         <div>
@@ -312,6 +325,13 @@ const MainPage = () => {
                 </DialogActions>
               </Dialog>
             </div>
+          </div>
+          <div className="button-container">
+            <ButtonGroup variant="outlined" aria-label="outlined button group" >
+              <div>
+                <Button className="new-btn" onClick={handleFilterOrders}>查看订单</Button>
+              </div>              
+            </ButtonGroup>
           </div>
         </div>
       );
