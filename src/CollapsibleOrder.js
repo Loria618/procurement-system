@@ -68,16 +68,16 @@ function Row(props) {
               <Table size="small" aria-label="purchases">
                 <TableHead>
                   <TableRow>
-                    <TableCell>商品名称</TableCell>
-                    <TableCell align="right">商品价格</TableCell>
-                    <TableCell align="right">商品数量</TableCell>
-                    <TableCell align="right">商品总价</TableCell>
+                    <TableCell sx={{ width: '40%' }}>商品名称</TableCell>
+                    <TableCell align="right" sx={{ width: '20%' }}>商品价格</TableCell>
+                    <TableCell align="right" sx={{ width: '20%' }}>商品数量</TableCell>
+                    <TableCell align="right" sx={{ width: '20%' }}>商品总价</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {row.orderContents.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell component="th" scope="row">
+                      <TableCell component="th" scope="row" sx={{ wordWrap: 'break-word' }}>
                         {item.name}
                       </TableCell>
                       <TableCell align="right">{item.price.toFixed(2)}</TableCell>

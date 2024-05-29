@@ -4,8 +4,8 @@ import SupplierDetails from './SupplierDetails';
 import CompanyInfo from './CompanyInfo';
 import CompanyDetails from './CompanyDetails';
 import FilterOrders from './FilterOrders';
+import ExportJSON from './ExportJSON';
 import db from './db';
-import dayjs from 'dayjs';
 // styling
 import './styles.css';
 import Button from '@mui/material/Button';
@@ -125,41 +125,6 @@ const MainPage = () => {
 
   const handleCloseDialog = () => {
     setOpenSuccessDialog(false);
-  };
-
-  const handleExportJSON = async () => {
-    try {
-      const companies = await db.companies.toArray();
-      const suppliers = await db.suppliers.toArray();
-
-      console.log('Exporting companies:', companies);
-      console.log('Exporting suppliers:', suppliers);
-
-      const data = {
-        companies,
-        suppliers
-      };
-
-      const dataStr = JSON.stringify(data, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-
-      const timestamp = dayjs().format('YYYY-MM-DD_HH-mm-ss');
-      const filename = `data_${timestamp}.json`;
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      setDialogTitle('导出成功');
-      setDialogContent(`已成功导出 ${companies.length} 条公司数据和 ${suppliers.length} 条供应商数据`);
-      setOpenSuccessDialog(true);
-    } catch (error) {
-      console.error('Error exporting JSON:', error);
-    }
   };
 
   const handleImportJSON = () => {
@@ -308,10 +273,10 @@ const MainPage = () => {
           <div className="button-container">
             <ButtonGroup variant="outlined" aria-label="outlined button group">
               <div>
-                <Button className="json-btn" onClick={handleExportJSON}>导出JSON文件到本地</Button>
+                <ExportJSON db={db} />
               </div>
               <div>
-                <Button className="json-btn" onClick={handleImportJSON}>导入本地JSON数据</Button>
+                <Button className="json-btn" onClick={handleImportJSON}>导入本地数据</Button>
               </div>
             </ButtonGroup>
             <div>

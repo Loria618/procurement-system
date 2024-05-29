@@ -37,7 +37,7 @@ div {
 }
 
 .new-temp-table-cell {
-	width: auto;
+	padding: 8px;
 }
 
 /* buttons */
@@ -56,6 +56,11 @@ div {
 
 .button-wrapper {
 	margin-right: 16px;
+}
+
+.delete-btn {
+	padding: 0;
+	min-width: 24px;
 }
 
 .menu-item {
@@ -87,6 +92,7 @@ div {
 .table-container {
 	margin-top: 10px !important;
 	margin-bottom: 10px !important;
+	overflow-x: auto;
 }
 
 /* text-boxes */

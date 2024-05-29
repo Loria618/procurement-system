@@ -258,43 +258,46 @@ function CompanyDetails({ company }) {
             <TableHead>
               <TableRow>
                 <TableCell className="new-temp-table-cell">商品名称</TableCell>
-                <TableCell className="new-temp-table-cell" align="right" style={{ width: '80px' }}>商品价格</TableCell>
-                <TableCell className="new-temp-table-cell" align="right" style={{ width: '80px' }}>商品数量</TableCell>
+                <TableCell className="new-temp-table-cell" align="right">商品价格</TableCell>
+                <TableCell className="new-temp-table-cell" align="right">商品数量</TableCell>
                 <TableCell className="new-temp-table-cell" align="right">商品总价</TableCell>
-                <TableCell className="new-temp-table-cell" align="right">删除商品</TableCell>
+                <TableCell className="new-temp-table-cell" align="right"></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {items.map((item, index) => (
                 <TableRow key={index}>
                   <TableCell className="new-temp-table-cell" component="th" scope="row">
-                    <TextField value={item.name} onChange={(e) => {
+                    <TextField className="table-text-field" value={item.name} onChange={(e) => {
                       const newItems = [...items];
                       newItems[index].name = e.target.value;
                       setItems(newItems);
-                    }} />
+                    }}
+                    />
                   </TableCell>
-                  <TableCell className="new-temp-table-cell" align="right" style={{ width: '100px' }}>
-                    <TextField value={item.price} type="number" onChange={(e) => {
+                  <TableCell className="new-temp-table-cell" align="right" >
+                    <TextField className="table-text-field" value={item.price} type="number" onChange={(e) => {
                       const newItems = [...items];
                       newItems[index].price = parseFloat(e.target.value);
                       newItems[index].totalPrice = newItems[index].price * newItems[index].quantity;
                       setItems(newItems);
-                    }} />
+                    }}
+                    />
                   </TableCell>
-                  <TableCell className="new-temp-table-cell" align="right" style={{ width: '100px' }}>
-                    <TextField value={item.quantity} type="number" onChange={(e) => {
+                  <TableCell className="new-temp-table-cell" align="right">
+                    <TextField className="table-text-field" value={item.quantity} type="number" onChange={(e) => {
                       const newItems = [...items];
                       newItems[index].quantity = parseInt(e.target.value, 10);
                       newItems[index].totalPrice = newItems[index].price * newItems[index].quantity;
                       setItems(newItems);
-                    }} />
+                    }}
+                    />
                   </TableCell>
                   <TableCell className="new-temp-table-cell" align="right">
                     {item.totalPrice.toFixed(2)}
                   </TableCell>
-                  <TableCell className="new-temp-table-cell" align="right">
-                    <Button className='delete-btn' onClick={() => handleDeleteItem(index)} startIcon={<DeleteIcon />} color="error">删除商品</Button>
+                  <TableCell className="delete-btn-cell" align="right">
+                    <Button className="delete-btn" onClick={() => handleDeleteItem(index)} startIcon={<DeleteIcon />} color="error"></Button>
                   </TableCell>
                 </TableRow>
               ))}

@@ -3,6 +3,9 @@ import MainPage from './MainPage';
 import './styles.css';
 
 /*
+2024.5.29 要在查看订单界面中添加一键展开和折叠所有订单的按钮
+要在查看订单界面增加生成长截图功能
+查看订单选择日期时月份和日期改成中国格式
 2024.5.26 第一次打包成apk
 两个表单在手机页面上显示不全，特别是CompanyDetails中创建订单时无法显示商品名称。
 找不到导出JSON文件的路径。
@@ -10,6 +13,7 @@ import './styles.css';
 删除订单前应该有确认提示框。
 日历的边框很奇怪。
 需要给按钮添加样式。
+需要修改App Logo和App Name。
 
 done 2024.5.26 MainPage导入JSON文件至空database时，无法显示导入数据的数量。
 2024.3.9
