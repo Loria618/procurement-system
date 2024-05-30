@@ -47,7 +47,7 @@ const MainPage = () => {
   useEffect(() => {
     fetchCompanies();
     fetchSuppliers();
-  }, [companies, suppliers]);
+  }, []);
 
   const fetchCompanies = async () => {
     const allCompanies = await db.companies.toArray();

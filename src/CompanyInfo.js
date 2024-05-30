@@ -100,11 +100,11 @@ function CompanyInfo() {
         <Dialog open={openConfirmDialog} onClose={() => setOpenConfirmDialog(false)}>
           <DialogTitle>{`已存在“${companyName}”`}</DialogTitle>
           <DialogContent>
-            <DialogContentText>{`前往编辑“${companyName}”的信息还是继续添加其他公司？`}</DialogContentText>
+            <DialogContentText>{`前往编辑“${companyName}”的信息`}<br />还是继续添加其他公司？</DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button className="confirm-btn" onClick={handleEditExisting} autoFocus>{`前往${companyName}详情页面进行编辑`}</Button>
-            <Button className="cancel-btn" onClick={handleContinueAdding}>继续添加其他公司</Button>
+            <Button className="confirm-btn" onClick={handleEditExisting} autoFocus>{`前往${companyName}`}<br />详情页面进行编辑</Button>
+            <Button className="cancel-btn" onClick={handleContinueAdding}>继续添加<br />其他公司</Button>
           </DialogActions>
         </Dialog>
       );
