@@ -109,7 +109,7 @@ const ExportButton = ({ db }) => {
 
     return (
         <div>
-            <Button className="json-btn" onClick={handleExportJSON}>
+            <Button className="json-btn" variant="outlined" onClick={handleExportJSON}>
                 导出已有文件
             </Button>
             <div>

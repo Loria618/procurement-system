@@ -18,12 +18,15 @@ import Button from '@mui/material/Button';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 
-// Extend dayjs with customParseFormat plugin
 dayjs.extend(customParseFormat);
 
 function Row(props) {
-  const { row, handleDeleteOrder, showDeleteButton } = props;
+  const { row, handleOpenDeleteDialog, showDeleteButton, allOpen, setAllOpen } = props;
   const [open, setOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setOpen(allOpen);
+  }, [allOpen]);
 
   return (
     <>
@@ -32,28 +35,29 @@ function Row(props) {
           <IconButton
             aria-label="expand row"
             size="small"
-            onClick={() => setOpen(!open)}
+            onClick={() => {
+              setOpen(!open);
+            }}
           >
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
-        <TableCell component="th" scope="row">
+        <TableCell component="th" scope="row" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {row.supplierName}
         </TableCell>
-        <TableCell align="right">{row.createTime}</TableCell>
-        <TableCell align="right">{row.orderContents.length}</TableCell>
-        <TableCell align="right">
+        <TableCell align="right" sx={{ whiteSpace: 'normal', wordWrap: 'break-word', minWidth: '43px' }}>{row.orderContents.length}</TableCell>
+        <TableCell align="right" sx={{ whiteSpace: 'normal', wordWrap: 'break-word', minWidth: '35px' }}>
           {row.orderContents.reduce((total, item) => total + item.totalPrice, 0).toFixed(2)}
         </TableCell>
-        <TableCell align="right">
+        <TableCell align="right" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.createTime}</TableCell>
+        <TableCell align="right" sx={{ padding: '0' }}>
           {showDeleteButton && (
             <Button
               className='delete-btn'
-              onClick={() => handleDeleteOrder(row.uuid)}
+              onClick={() => handleOpenDeleteDialog(row.uuid)}
               startIcon={<DeleteIcon />}
               color="error"
             >
-              删除订单
             </Button>
           )}
         </TableCell>
@@ -68,16 +72,16 @@ function Row(props) {
               <Table size="small" aria-label="purchases">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ width: '40%' }}>商品名称</TableCell>
-                    <TableCell align="right" sx={{ width: '20%' }}>商品价格</TableCell>
-                    <TableCell align="right" sx={{ width: '20%' }}>商品数量</TableCell>
-                    <TableCell align="right" sx={{ width: '20%' }}>商品总价</TableCell>
+                    <TableCell sx={{ width: '40%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>商品名称</TableCell>
+                    <TableCell align="right" sx={{ width: '20%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>商品价格</TableCell>
+                    <TableCell align="right" sx={{ width: '20%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>商品数量</TableCell>
+                    <TableCell align="right" sx={{ width: '20%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>商品总价</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {row.orderContents.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell component="th" scope="row" sx={{ wordWrap: 'break-word' }}>
+                      <TableCell component="th" scope="row" sx={{ wordWrap: 'break-word', whiteSpace: 'normal' }}>
                         {item.name}
                       </TableCell>
                       <TableCell align="right">{item.price.toFixed(2)}</TableCell>
@@ -86,9 +90,9 @@ function Row(props) {
                     </TableRow>
                   ))}
                   <TableRow>
-                    <TableCell colSpan={2} />
-                    <TableCell align="right"><strong>订单总价</strong></TableCell>
+                    <TableCell align="left"><strong>订单总价</strong></TableCell>
                     <TableCell align="right"><strong>{row.orderContents.reduce((total, item) => total + item.totalPrice, 0).toFixed(2)}</strong></TableCell>
+                    <TableCell colSpan={2} />
                   </TableRow>
                 </TableBody>
               </Table>
@@ -114,11 +118,14 @@ Row.propTypes = {
     createTime: PropTypes.string.isRequired,
     uuid: PropTypes.string.isRequired,
   }).isRequired,
-  handleDeleteOrder: PropTypes.func.isRequired,
   showDeleteButton: PropTypes.bool.isRequired,
+  allOpen: PropTypes.bool.isRequired,
+  setAllOpen: PropTypes.func.isRequired,
 };
 
-export default function CollapsibleOrder({ orders = [], handleDeleteOrder, showDeleteButton = true }) {
+export default function CollapsibleOrder({ orders = [], handleOpenDeleteDialog, showDeleteButton = true }) {
+  const [allOpen, setAllOpen] = React.useState(false);
+
   const sortedOrders = [...orders].sort((a, b) => {
     const dateA = dayjs(a.createTime, 'YY-MM-DD HH:mm:ss');
     const dateB = dayjs(b.createTime, 'YY-MM-DD HH:mm:ss');
@@ -126,25 +133,43 @@ export default function CollapsibleOrder({ orders = [], handleDeleteOrder, showD
   });
 
   return (
-    <TableContainer component={Paper} className="table-container">
-      <Table aria-label="collapsible order">
-        <TableHead>
-          <TableRow>
-            <TableCell />
-            <TableCell>供货商</TableCell>
-            <TableCell align="right">创建时间</TableCell>
-            <TableCell align="right">订单商品数</TableCell>
-            <TableCell align="right">订单总价</TableCell>
-            <TableCell />
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {sortedOrders.map((order, index) => (
-            <Row key={index} row={order} handleDeleteOrder={handleDeleteOrder} showDeleteButton={showDeleteButton} />
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <>
+      <TableContainer component={Paper} className="table-container">
+        <Table aria-label="collapsible order">
+          <TableHead>
+            <TableRow>
+              <TableCell>
+                <IconButton
+                  aria-label="expand row"
+                  size="small"
+                  onClick={() => {
+                    setAllOpen(!allOpen);
+                  }}
+                >
+                  {allOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                </IconButton>
+              </TableCell>
+              <TableCell>供货商</TableCell>
+              <TableCell align="right" sx={{ whiteSpace: 'normal', textAlign: 'center' }}>
+                <span style={{ display: 'block' }}>订单</span>
+                <span style={{ display: 'block' }}>商品数</span>
+              </TableCell>
+              <TableCell align="right" sx={{ whiteSpace: 'normal', textAlign: 'center' }}>
+                <span style={{ display: 'block' }}>订单</span>
+                <span style={{ display: 'block' }}>总价</span>
+              </TableCell>
+              <TableCell align="right">创建时间</TableCell>
+              <TableCell />
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {sortedOrders.map((order, index) => (
+              <Row key={index} row={order} handleOpenDeleteDialog={handleOpenDeleteDialog} showDeleteButton={showDeleteButton} allOpen={allOpen} setAllOpen={setAllOpen} />
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </>
   );
 }
 
@@ -164,6 +189,5 @@ CollapsibleOrder.propTypes = {
       uuid: PropTypes.string.isRequired,
     }).isRequired
   ).isRequired,
-  handleDeleteOrder: PropTypes.func.isRequired,
   showDeleteButton: PropTypes.bool,
 };

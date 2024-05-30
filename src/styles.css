@@ -28,6 +28,14 @@ div {
 	align-items: flex-start;
 }
 
+.main-title {
+	font-size: 3rem;
+	font-weight: bold;
+	color: #0174b3;
+	margin-top: 10% !important;
+	margin-bottom: 10% !important;
+}
+
 .new-temp-table-container {
 	width: 100%;
 	/* 容器宽度为100% */
@@ -37,7 +45,7 @@ div {
 }
 
 .new-temp-table-cell {
-	padding: 8px;
+	padding: 4px;
 }
 
 /* buttons */

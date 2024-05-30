@@ -89,7 +89,7 @@ const FilterOrders = () => {
           label="选择日期"
           value={selectedDate}
           onChange={handleDateChange}
-          renderInput={(params) => <TextField {...params} />}
+          renderInput={(params) => <TextField {...params} />}          
         />
       </Stack>
       <div>
@@ -98,7 +98,7 @@ const FilterOrders = () => {
       {selectedDate && (
         <div align="right">
           <p>选择日期： {dayjs(selectedDate).format('YY-MM-DD')}</p>
-          <p>订单总金额：{totalAmountForSelectedDate}</p>
+          <p>当日订单总金额：{totalAmountForSelectedDate}</p>
         </div>
       )}
       {message ? (

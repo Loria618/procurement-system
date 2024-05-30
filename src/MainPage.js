@@ -22,6 +22,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import { Container, Grid, Typography } from '@mui/material';
 
 const MainPage = () => {
   const [companies, setCompanies] = useState([]);
@@ -189,18 +190,19 @@ const MainPage = () => {
     } else {
       return (
         <div>
-          <h1>欢迎来到进货账单系统</h1>
-          <div className="button-container">
-            <div className="button-wrapper">
+          <Container>
+            <Typography className="main-title" variant="h4" component="h1" gutterBottom align="justify">
+              欢迎来到<br />进货账单系统
+            </Typography>
+            <Grid container spacing={3} alignItems="center">
               {companies.length > 0 && (
-                <>
+                <Grid item>
                   <ButtonGroup variant="contained" ref={companyAnchorRef} aria-label="company selection">
                     <Button onClick={toggleCompanyMenu}
                       size="medium"
                       aria-controls={openCompanyMenu ? 'company-menu' : undefined}
                       aria-expanded={openCompanyMenu ? 'true' : undefined}
                       aria-haspopup="menu"
-                      className="button-group"
                       endIcon={<ArrowDropDownIcon />}>
                       {"选择公司"}
                     </Button>
@@ -212,7 +214,7 @@ const MainPage = () => {
                           <ClickAwayListener onClickAway={(event) => handleClose(event, 'company')}>
                             <MenuList>
                               {companies.map((company) => (
-                                <MenuItem key={company.companyName} onClick={() => handleCompanyClick(company.companyName)} className="menu-item">
+                                <MenuItem key={company.companyName} onClick={() => handleCompanyClick(company.companyName)}>
                                   {company.companyName}
                                 </MenuItem>
                               ))}
@@ -222,19 +224,16 @@ const MainPage = () => {
                       </Grow>
                     )}
                   </Popper>
-                </>
+                </Grid>
               )}
-            </div>
-            <div className="button-wrapper">
               {suppliers.length > 0 && (
-                <>
+                <Grid item>
                   <ButtonGroup variant="contained" ref={supplierAnchorRef} aria-label="supplier selection">
                     <Button onClick={toggleSupplierMenu}
                       size="medium"
                       aria-controls={openSupplierMenu ? 'supplier-menu' : undefined}
                       aria-expanded={openSupplierMenu ? 'true' : undefined}
                       aria-haspopup="menu"
-                      className="button-group"
                       endIcon={<ArrowDropDownIcon />}>
                       {"选择供应商"}
                     </Button>
@@ -246,7 +245,7 @@ const MainPage = () => {
                           <ClickAwayListener onClickAway={(event) => handleClose(event, 'supplier')}>
                             <MenuList>
                               {suppliers.map((supplier) => (
-                                <MenuItem key={supplier.supplierName} onClick={() => handleSupplierClick(supplier.supplierName)} className="menu-item">
+                                <MenuItem key={supplier.supplierName} onClick={() => handleSupplierClick(supplier.supplierName)}>
                                   {supplier.supplierName}
                                 </MenuItem>
                               ))}
@@ -256,48 +255,40 @@ const MainPage = () => {
                       </Grow>
                     )}
                   </Popper>
-                </>
+                </Grid>
               )}
-            </div>
-          </div>
-          <div className="button-container">
-            <ButtonGroup variant="outlined" aria-label="outlined button group">
-              <div>
-                <Button className="new-btn" onClick={handleNewCompany}>新建公司信息</Button>
-              </div>
-              <div>
-                <Button className="new-btn" onClick={handleNewSupplier}>新建供应商信息</Button>
-              </div>
-            </ButtonGroup>
-          </div>
-          <div className="button-container">
-            <ButtonGroup variant="outlined" aria-label="outlined button group">
-              <div>
+            </Grid>
+            <Grid container spacing={3} alignItems="center" sx={{ marginTop: '20px' }}>
+              <Grid item>
+                <Button variant="outlined" onClick={handleNewCompany}>新建公司信息</Button>
+              </Grid>
+              <Grid item>
+                <Button variant="outlined" onClick={handleNewSupplier}>新建供应商信息</Button>
+              </Grid>
+            </Grid>
+            <Grid container spacing={3} alignItems="center" sx={{ marginTop: '20px' }}>
+              <Grid item>
                 <ExportJSON db={db} />
-              </div>
-              <div>
-                <Button className="json-btn" onClick={handleImportJSON}>导入本地数据</Button>
-              </div>
-            </ButtonGroup>
-            <div>
-              <Dialog open={openSuccessDialog} onClose={handleCloseDialog}>
-                <DialogTitle>{dialogTitle}</DialogTitle>
-                <DialogContent>
-                  <DialogContentText>{dialogContent}</DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                  <Button className="confirm-btn" onClick={handleCloseDialog} autoFocus>好的</Button>
-                </DialogActions>
-              </Dialog>
-            </div>
-          </div>
-          <div className="button-container">
-            <ButtonGroup variant="outlined" aria-label="outlined button group" >
-              <div>
-                <Button className="new-btn" onClick={handleFilterOrders}>查看订单</Button>
-              </div>              
-            </ButtonGroup>
-          </div>
+              </Grid>
+              <Grid item>
+                <Button variant="outlined" onClick={handleImportJSON}>导入本地数据</Button>
+              </Grid>
+            </Grid>
+            <Grid container spacing={3} alignItems="center" sx={{ marginTop: '20px' }}>
+              <Grid item>
+                <Button variant="outlined" onClick={handleFilterOrders}>查看订单</Button>
+              </Grid>
+            </Grid>
+            <Dialog open={openSuccessDialog} onClose={handleCloseDialog}>
+              <DialogTitle>{dialogTitle}</DialogTitle>
+              <DialogContent>
+                <DialogContentText>{dialogContent}</DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleCloseDialog} autoFocus>好的</Button>
+              </DialogActions>
+            </Dialog>
+          </Container>
         </div>
       );
     }

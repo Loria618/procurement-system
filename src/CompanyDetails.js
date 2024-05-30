@@ -44,19 +44,42 @@ function CompanyDetails({ company }) {
   const [itemName, setItemName] = useState('');
   const [itemPrice, setItemPrice] = useState('');
   const [itemQuantity, setItemQuantity] = useState('');
-  const [openAddItemDialog, setOpenAddItemDialog] = useState(false);
   const [items, setItems] = useState([]);
-  const [openCreateOrderDialog, setOpenCreateOrderDialog] = useState(false);
   const [orderTitle, setOrderTitle] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
   const [orders, setOrders] = useState([]);
-  const [openDeleOrderDialog, setOpenDeleOrderDialog] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [suppliers, setSuppliers] = useState([]);
 
   const [editNote, setEditNote] = useState(false);
   const [note, setNote] = useState(company.note);
+
+  const [openCreateOrderDialog, setOpenCreateOrderDialog] = useState(false);
+  const [openDeleOrderConfirmDialog, setOpenDeleOrderConfirmDialog] = useState(false);
+
+  const [uuidToDelete, setUuidToDelete] = useState(null);
+  const [dialogInfo, setDialogInfo] = useState({
+    open: false,
+    title: "",
+    content: ""
+  });
+
+  const handleOpenDialog = (title, content) => {
+    setDialogInfo({
+      open: true,
+      title,
+      content
+    });
+  };
+
+  const handleCloseDialog = () => {
+    setDialogInfo({
+      open: false,
+      title: "",
+      content: ""
+    });
+    setErrorMessage("");
+  };
 
   const fetchOrders = async () => {
     try {
@@ -85,7 +108,18 @@ function CompanyDetails({ company }) {
     fetchOrders();
     fetchSuppliers();
     setNote(company.note);
-  }, [company, openSuccessDialog]);
+  }, [company, handleCloseDialog]);
+
+  const handleOpenDeleteDialog = (uuid) => {
+    setUuidToDelete(uuid);
+    setOpenDeleOrderConfirmDialog(true);
+  };
+
+  const handleConfirmDeleteOrder = () => {
+    handleDeleteOrder(uuidToDelete);
+    setOpenDeleOrderConfirmDialog(false);
+    setUuidToDelete(null);
+  };
 
   const handleDeleteOrder = async (uuid) => {
     try {
@@ -94,7 +128,7 @@ function CompanyDetails({ company }) {
         const updatedOrders = companyData.orders.filter(order => order.uuid !== uuid);
         await db.companies.update(company.companyName, { orders: updatedOrders });
         setOrders(updatedOrders);
-        setOpenDeleOrderDialog(true);
+        handleOpenDialog("删除成功", "成功删除了订单。");
       }
     } catch (error) {
       console.error('Failed to delete order', error);
@@ -103,7 +137,7 @@ function CompanyDetails({ company }) {
 
   const handleAddItem = () => {
     if (!itemName || !itemPrice || !itemQuantity) {
-      setOpenAddItemDialog(true);
+      handleOpenDialog("商品名称、单价和数量不可留空", "请输入商品名称、单价和数量。");
     } else {
       const newItem = createData(itemName, parseFloat(itemPrice), parseInt(itemQuantity, 10));
       setItems([...items, newItem]);
@@ -117,22 +151,9 @@ function CompanyDetails({ company }) {
     setItems(items.filter((_, idx) => idx !== index));
   };
 
-  const handleCloseDialog = () => {
-    if (openCreateOrderDialog) {
-      setOpenCreateOrderDialog(false);
-    } else if (openAddItemDialog) {
-      setOpenAddItemDialog(false);
-    } else if (openSuccessDialog) {
-      setOpenSuccessDialog(false);
-    } else if (openDeleOrderDialog) {
-      setOpenDeleOrderDialog(false);
-    }
-    setErrorMessage("");
-  };
-
   const handleTryToCreateOrder = () => {
     if (items.length === 0) {
-      setOpenAddItemDialog(true);
+      handleOpenDialog("商品名称、单价和数量不可留空", "请输入商品名称、单价和数量。");
       return;
     }
     const createTime = dayjs(new Date()).format('YY-MM-DD HH:mm:ss');
@@ -172,8 +193,8 @@ function CompanyDetails({ company }) {
 
       await db.companies.put(companyData);
       console.log("Order created successfully!");
-      setOpenSuccessDialog(true);
-      setItems([]);
+      handleOpenDialog("创建成功", `成功为${company.companyName}创建订单。供货商：${selectedSupplier?.supplierName}`);
+    setItems([]);
     } catch (error) {
       console.error("Error creating order:", error);
       alert(`创建订单失败！错误信息: ${error.message}`);
@@ -228,6 +249,19 @@ function CompanyDetails({ company }) {
         />
       </div>
       <div>
+        <Dialog open={dialogInfo.open} onClose={handleCloseDialog}>
+          <DialogTitle>{dialogInfo.title}</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              {dialogInfo.content}
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog} autoFocus>好的</Button>
+          </DialogActions>
+        </Dialog>
+      </div>
+      <div>
         <Box
           component="form"
           sx={{
@@ -241,42 +275,31 @@ function CompanyDetails({ company }) {
           <TextField type="number" className="item-input" label="商品数量" variant="outlined" value={itemQuantity} onChange={(e) => setItemQuantity(e.target.value)} />
         </Box>
         <Button className="add-item-btn" tabIndex={-1} onClick={handleAddItem} startIcon={<AddShoppingCartIcon />}>添加商品</Button>
-        <Dialog open={openAddItemDialog} onClose={() => setOpenAddItemDialog(false)}>
-          <DialogTitle>{"商品名称、单价和数量不可留空"}</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              请输入商品名称、单价和数量。
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button className="confirm-btn" onClick={() => setOpenAddItemDialog(false)} autoFocus>好的</Button>
-          </DialogActions>
-        </Dialog>
-
+        
         <TableContainer component={Paper} className="new-temp-table-container">
           <Table aria-label="item table">
             <TableHead>
               <TableRow>
-                <TableCell className="new-temp-table-cell">商品名称</TableCell>
-                <TableCell className="new-temp-table-cell" align="right">商品价格</TableCell>
-                <TableCell className="new-temp-table-cell" align="right">商品数量</TableCell>
-                <TableCell className="new-temp-table-cell" align="right">商品总价</TableCell>
-                <TableCell className="new-temp-table-cell" align="right"></TableCell>
+                <TableCell className="new-temp-table-cell" sx={{ minWidth: '100px' }}>商品名称</TableCell>
+                <TableCell className="new-temp-table-cell" align="right" sx={{ minWidth: '60px' }}>商品价格</TableCell>
+                <TableCell className="new-temp-table-cell" align="right" sx={{ minWidth: '60px' }}>商品数量</TableCell>
+                <TableCell className="new-temp-table-cell" align="right" sx={{ minWidth: '60px' }}>商品总价</TableCell>
+                <TableCell className="new-temp-table-cell" align="right" sx={{ minWidth: '20px' }}></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {items.map((item, index) => (
                 <TableRow key={index}>
-                  <TableCell className="new-temp-table-cell" component="th" scope="row">
-                    <TextField className="table-text-field" value={item.name} onChange={(e) => {
+                  <TableCell className="new-temp-table-cell" component="th" scope="row" sx={{ minWidth: '100px' }}>
+                    <TextField className="table-text-field" fullWidth value={item.name} onChange={(e) => {
                       const newItems = [...items];
                       newItems[index].name = e.target.value;
                       setItems(newItems);
                     }}
                     />
                   </TableCell>
-                  <TableCell className="new-temp-table-cell" align="right" >
-                    <TextField className="table-text-field" value={item.price} type="number" onChange={(e) => {
+                  <TableCell className="new-temp-table-cell" align="right" sx={{ minWidth: '70px' }}>
+                    <TextField className="table-text-field" fullWidth value={item.price} type="number" onChange={(e) => {
                       const newItems = [...items];
                       newItems[index].price = parseFloat(e.target.value);
                       newItems[index].totalPrice = newItems[index].price * newItems[index].quantity;
@@ -284,8 +307,8 @@ function CompanyDetails({ company }) {
                     }}
                     />
                   </TableCell>
-                  <TableCell className="new-temp-table-cell" align="right">
-                    <TextField className="table-text-field" value={item.quantity} type="number" onChange={(e) => {
+                  <TableCell className="new-temp-table-cell" align="right" sx={{ minWidth: '60px' }}>
+                    <TextField className="table-text-field" fullWidth value={item.quantity} type="number" onChange={(e) => {
                       const newItems = [...items];
                       newItems[index].quantity = parseInt(e.target.value, 10);
                       newItems[index].totalPrice = newItems[index].price * newItems[index].quantity;
@@ -293,10 +316,10 @@ function CompanyDetails({ company }) {
                     }}
                     />
                   </TableCell>
-                  <TableCell className="new-temp-table-cell" align="right">
+                  <TableCell className="new-temp-table-cell" align="right" sx={{ minWidth: '60px' }}>
                     {item.totalPrice.toFixed(2)}
                   </TableCell>
-                  <TableCell className="delete-btn-cell" align="right">
+                  <TableCell className="delete-btn-cell" align="right" sx={{ padding: '0' }}>
                     <Button className="delete-btn" onClick={() => handleDeleteItem(index)} startIcon={<DeleteIcon />} color="error"></Button>
                   </TableCell>
                 </TableRow>
@@ -304,6 +327,7 @@ function CompanyDetails({ company }) {
             </TableBody>
           </Table>
         </TableContainer>
+
         <div>
           <Button startIcon={<SaveIcon />} onClick={handleTryToCreateOrder}>
             为{company.companyName}创建进货订单
@@ -338,31 +362,25 @@ function CompanyDetails({ company }) {
               <Button onClick={handleCloseDialog}>取消</Button>
               <Button onClick={handleTryToCreateOrder}>创建订单</Button>
             </DialogActions>
-          </Dialog>
-          <Dialog open={openSuccessDialog} onClose={handleCloseDialog}>
-            <DialogTitle>{"创建成功"}</DialogTitle>
-            <DialogContent>
-              <DialogContentText>成功为{company.companyName}创建订单。供货商：{selectedSupplier?.supplierName}</DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <Button className="confirm-btn" onClick={handleCloseDialog} autoFocus>好的</Button>
-            </DialogActions>
-          </Dialog>
+          </Dialog>          
         </div>
       </div>
       <div>
         {orders.length > 0 && (
-          <CollapsibleOrder orders={orders} handleDeleteOrder={handleDeleteOrder} showDeleteButton={true} />
+          <CollapsibleOrder orders={orders} handleOpenDeleteDialog={handleOpenDeleteDialog} showDeleteButton={true} />
         )}
       </div>
       <div>
-        <Dialog open={openDeleOrderDialog} onClose={handleCloseDialog}>
-          <DialogTitle>{"删除成功"}</DialogTitle>
+        <Dialog open={openDeleOrderConfirmDialog} onClose={() => setOpenDeleOrderConfirmDialog(false)}>
+          <DialogTitle>删除的订单无法恢复</DialogTitle>
           <DialogContent>
-            <DialogContentText>成功删除了订单。</DialogContentText>
+            <DialogContentText>
+              确定要删除这个订单吗？
+            </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button className="confirm-btn" onClick={handleCloseDialog} autoFocus>好的</Button>
+            <Button onClick={() => setOpenDeleOrderConfirmDialog(false)}>取消</Button>
+            <Button onClick={handleConfirmDeleteOrder} color="error">删除</Button>
           </DialogActions>
         </Dialog>
       </div>
